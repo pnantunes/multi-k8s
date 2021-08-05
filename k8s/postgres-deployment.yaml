@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: postgres-deployment
+spec:
+    replicas: 1 # More than one may cause concurrency problems if it's not properly configured
+    selector:
+        matchLabels:
+            component: postgres
+    template:
+        metadata:
+            labels:
+                component: postgres
+        spec:
+            volumes:
+                - name: postgres-storage
+                  persistentVolumeClaim:
+                    claimName: database-persistent-volume-claim
+            containers:
+                - name: postgres
+                  image: postgres
+                  ports:
+                    - containerPort: 5432 # Default redis port; no need to reconfigure
+                  volumeMounts:
+                    - name: postgres-storage
+                      mountPath: /var/lib/postgresql/data # Default storage location for Postgres
+                      subPath: postgres # Any data inside the container that is stored inside mounthPath is going to be stored inside a folder called "postgres" inside of the actual persistent volume claim. Postgres needs a this sub-folder to work.
+                  env:
+                    - name: POSTGRES_PASSWORD
+                      valueFrom:
+                        secretKeyRef: # Defined imperatively via command line
+                            name: pgpassword
+                            key: PGPASSWORD

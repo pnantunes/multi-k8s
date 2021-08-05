@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: server-deployment
+spec:
+    replicas: 3
+    selector:
+        matchLabels:
+            component: server
+    template:
+        metadata:
+            labels:
+                component: server
+        spec:
+            containers:
+                - name: server
+                  image: pnantunes/multi-server
+                  ports:
+                    - containerPort: 5000
+                  env:
+                    - name: REDIS_HOST
+                      value: redis-cluster-ip-service # Name given to the service in the redis service config file
+                    - name: REDIS_PORT
+                      value: '6379' # Default redis port, also the onde defined in the redis service config file                    
+                    - name: PGUSER
+                      value: postgres
+                    - name: PGHOST
+                      value: postgres-cluster-ip-service # Name given to the service in the postgres service config file
+                    - name: PGPORT
+                      value: '5432'  # Default postgres port, also the onde defined in the redis service config file                    
+                    - name: PGDATABASE
+                      value: postgres
+                    - name: PGPASSWORD
+                      valueFrom:
+                        secretKeyRef: # Defined imperatively via command line
+                            name: pgpassword
+                            key: PGPASSWORD
